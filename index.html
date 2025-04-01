@@ -74,14 +74,6 @@
       let personalCount = 0;
       document.getElementById('personalCount').innerText = "내 카운트: " + personalCount;
 
-      // 🔊 목탁 소리 추가
-      const clickSound = new Audio("click-sound.mp3"); // 파일 업로드 필요!
-
-      // 버튼 클릭 시 카운트를 증가시키는 함수
-      window.incrementCount = function () {
-        // 목탁 소리 재생
-        clickSound.play();
-
         // 이미지 변경 효과
         const img = document.getElementById("clickButton");
         img.src = "button-active.png";  // 클릭 시 이미지 변경
