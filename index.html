@@ -4,9 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>용수를 누르세요!</title>
+  
   <!-- Firebase compat SDK -->
   <script defer src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database-compat.js"></script>
+
   <style>
     body {
       display: flex;
@@ -19,7 +21,7 @@
       font-family: sans-serif;
     }
     #clickButton {
-      width: 300px;  /* 원하는 크기로 조정 */
+      width: 300px;
       cursor: pointer;
       transition: transform 0.1s;
     }
@@ -29,12 +31,13 @@
     h1 {
       margin-bottom: 20px;
     }
-    #countDisplay {
+    .count-container {
       margin-top: 20px;
       font-size: 24px;
       font-weight: bold;
     }
   </style>
+
   <script defer>
     document.addEventListener("DOMContentLoaded", function () {
       // Firebase 설정
@@ -52,54 +55,54 @@
       // Firebase 초기화
       firebase.initializeApp(firebaseConfig);
       const database = firebase.database();
-      const countRef = database.ref('count');
+      const totalCountRef = database.ref('totalCount');
 
-      // 초기 값 설정: count가 없으면 0으로 설정
-      countRef.once('value').then(snapshot => {
+      // 초기 값 설정: totalCount가 없으면 0으로 설정
+      totalCountRef.once('value').then(snapshot => {
         if (snapshot.val() === null) {
-          countRef.set(0);
-          console.log("초기 값이 설정되었습니다: 0");
+          totalCountRef.set(0);
         }
-      }).catch(error => {
-        console.error("초기 값 설정 중 오류 발생:", error);
       });
+
+      // 개인 카운트 (새로고침 시 0)
+      let personalCount = 0;
+      document.getElementById('personalCount').innerText = "내 카운트: " + personalCount;
 
       // 버튼 클릭 시 카운트를 증가시키는 함수
       window.incrementCount = function () {
-        // 이미지 효과: 클릭 시 이미지 변경
+        // 이미지 변경 효과
         const img = document.getElementById("clickButton");
-        img.src = "button-active.png";  // 클릭 상태 이미지로 변경
+        img.src = "button-active.png";  // 클릭 시 이미지 변경
+        setTimeout(() => { img.src = "button.png"; }, 150);
 
-        // 일정 시간 후 원래 이미지로 복구
-        setTimeout(() => {
-          img.src = "button.png";
-        }, 150);  // 150ms 후 복구 (원하는 시간으로 조정)
-
-        // Firebase 트랜잭션을 통해 count 증가
-        countRef.transaction(currentCount => {
-          if (currentCount === null) {
-            return 1;
-          }
-          return currentCount + 1;
-        }).then(() => {
-          console.log("카운트가 성공적으로 업데이트되었습니다.");
-        }).catch(error => {
-          console.error("카운트 업데이트 중 오류 발생:", error);
+        // 총 카운트 증가 (Firebase)
+        totalCountRef.transaction(currentCount => {
+          return (currentCount || 0) + 1;
         });
+
+        // 개인 카운트 증가 (페이지 내에서만 유지)
+        personalCount++;
+        document.getElementById('personalCount').innerText = "내 카운트: " + personalCount;
       };
 
-      // 실시간으로 count 값을 읽어와서 페이지에 반영
-      countRef.on('value', snapshot => {
+      // 실시간으로 총 카운트 반영
+      totalCountRef.on('value', snapshot => {
         const count = snapshot.val() || 0;
-        document.getElementById('countDisplay').innerText = "카운트: " + count;
+        document.getElementById('totalCount').innerText = "총 카운트: " + count;
       });
     });
   </script>
 </head>
 <body>
   <h1>용수를 누르세요!</h1>
-  <!-- 버튼 대신 이미지 사용: 이미지 파일은 프로젝트 폴더에 button.png 와 button-active.png 로 저장 -->
+  
+  <!-- 버튼 (이미지) -->
   <img id="clickButton" src="button.png" alt="클릭 버튼" onclick="incrementCount()">
-  <div id="countDisplay">카운트: 0</div>
+  
+  <!-- 카운트 표시 -->
+  <div class="count-container">
+    <div id="totalCount">총 카운트: 0</div>
+    <div id="personalCount">내 카운트: 0</div>
+  </div>
 </body>
 </html>
