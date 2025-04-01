@@ -36,6 +36,12 @@
       font-size: 24px;
       font-weight: bold;
     }
+    footer {
+      position: fixed;
+      bottom: 10px;
+      font-size: 14px;
+      color: gray;
+    }
   </style>
 
   <script defer>
@@ -68,8 +74,14 @@
       let personalCount = 0;
       document.getElementById('personalCount').innerText = "내 카운트: " + personalCount;
 
+      // 🔊 목탁 소리 추가
+      const clickSound = new Audio("click-sound.mp3"); // 파일 업로드 필요!
+
       // 버튼 클릭 시 카운트를 증가시키는 함수
       window.incrementCount = function () {
+        // 목탁 소리 재생
+        clickSound.play();
+
         // 이미지 변경 효과
         const img = document.getElementById("clickButton");
         img.src = "button-active.png";  // 클릭 시 이미지 변경
@@ -80,15 +92,20 @@
           return (currentCount || 0) + 1;
         });
 
-        // 개인 카운트 증가 (페이지 내에서만 유지)
+        // 개인 카운트 증가
         personalCount++;
         document.getElementById('personalCount').innerText = "내 카운트: " + personalCount;
       };
 
-      // 실시간으로 총 카운트 반영
-      totalCountRef.on('value', snapshot => {
-        const count = snapshot.val() || 0;
-        document.getElementById('totalCount').innerText = "총 카운트: " + count;
+      // 총 카운트 실시간 반영 + 10,000개 달성 이벤트
+      totalCountRef.on("value", (snapshot) => {
+        const totalCount = snapshot.val() || 0;
+        document.getElementById('totalCount').innerText = "총 카운트: " + totalCount;
+
+        // 🎉 10,000번 달성 시 이벤트 발생
+        if (totalCount % 10000 === 0 && totalCount !== 0) {
+          alert(`축하합니다! ${totalCount}번 클릭 달성! 🎉`);
+        }
       });
     });
   </script>
@@ -104,5 +121,10 @@
     <div id="totalCount">총 카운트: 0</div>
     <div id="personalCount">내 카운트: 0</div>
   </div>
+
+  <!-- 제작자 정보 -->
+  <footer>
+    <p>제작: <strong>네 이름</strong></p>
+  </footer>
 </body>
 </html>
