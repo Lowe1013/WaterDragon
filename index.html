@@ -111,7 +111,7 @@
       font-size: 14px;
       text-align: center;
       border: 1px solid #ddd;
-      cursor: pointer; /* 클릭 가능하도록 변경 */
+      cursor: pointer;
       user-select: none;
     }
     footer {
@@ -152,7 +152,7 @@
       const img = document.getElementById("clickButton");
 
       function pressButton() {
-        img.src = "button-active.png";
+        img.src = "./button-active.png"; // 경로 명확하게 지정
         img.style.transform = "scale(0.95)";
         personalCount++;
         document.getElementById('personalCount').innerText = personalCount;
@@ -160,7 +160,9 @@
       }
 
       function releaseButton() {
-        img.src = "button.png";
+        setTimeout(() => {
+          img.src = "./button.png"; // 원래 이미지 복귀
+        }, 100);
         img.style.transform = "scale(1)";
       }
 
@@ -182,68 +184,6 @@
           document.getElementById('specialEvent').style.display = "block";
         }
       });
-
-      function postComment() {
-        const input = document.getElementById("commentInput");
-        const commentText = input.value.trim();
-
-        if (commentText !== "") {
-          const newCommentRef = commentsRef.push();
-          newCommentRef.set({
-            text: commentText,
-            timestamp: Date.now()
-          });
-          input.value = "";
-        }
-      }
-
-      document.getElementById("commentButton").addEventListener("click", postComment);
-      document.getElementById("commentInput").addEventListener("keypress", function (event) {
-        if (event.key === "Enter") {
-          postComment();
-        }
-      });
-
-      commentsRef.on("child_added", (snapshot) => {
-        const commentData = snapshot.val();
-        const commentKey = snapshot.key; // 댓글의 고유 키
-
-        const commentGrid = document.getElementById("commentGrid");
-        const commentBox = document.createElement("div");
-        commentBox.classList.add("commentBox");
-        commentBox.textContent = commentData.text;
-        
-        // 꾹 누르면 삭제
-        let holdTimer;
-        commentBox.addEventListener("mousedown", function () {
-          holdTimer = setTimeout(() => {
-            if (confirm("이 댓글을 삭제하시겠습니까?")) {
-              commentsRef.child(commentKey).remove();
-            }
-          }, 800); // 0.8초 꾹 누르면 삭제
-        });
-
-        commentBox.addEventListener("mouseup", function () {
-          clearTimeout(holdTimer);
-        });
-
-        commentGrid.prepend(commentBox);
-
-        while (commentGrid.children.length > 24) {
-          commentGrid.removeChild(commentGrid.lastChild);
-        }
-      });
-
-      commentsRef.on("child_removed", (snapshot) => {
-        const commentBoxes = document.getElementsByClassName("commentBox");
-        for (let box of commentBoxes) {
-          if (box.textContent === snapshot.val().text) {
-            box.remove();
-            break;
-          }
-        }
-      });
-
     });
   </script>
 </head>
@@ -259,15 +199,6 @@
   </div>
 
   <div id="specialEvent">🎥 100,000 클릭 달성! 특별 영상이 공개됩니다!</div>
-
-  <div id="commentSection">
-    <div id="commentTitle">용수 칭찬 공간</div>
-    <div id="commentInputContainer">
-      <input id="commentInput" type="text" placeholder="용수를 칭찬해주세요!">
-      <button id="commentButton"></button>
-    </div>
-    <div id="commentGrid"></div>
-  </div>
 
   <footer>
     <p>제작: <strong>Garden.two</strong></p>
