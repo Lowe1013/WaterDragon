@@ -1,122 +1,15 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>용수를 누르세요!</title>
-  
-  <!-- Firebase compat SDK -->
-  <script defer src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database-compat.js"></script>
-
-  <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background: #f0f0f0;
-      font-family: sans-serif;
-    }
-    #clickButton {
-      width: 300px;
-      cursor: pointer;
-      transition: transform 0.1s;
-    }
-    #clickButton:active {
-      transform: scale(0.95);
-    }
-    h1 {
-      margin-bottom: 20px;
-    }
-    .count-container {
-      margin-top: 20px;
-      font-size: 24px;
-      font-weight: bold;
-    }
-    footer {
-      position: fixed;
-      bottom: 10px;
-      font-size: 14px;
-      color: gray;
-    }
-  </style>
-
-  <script defer>
-    document.addEventListener("DOMContentLoaded", function () {
-      // Firebase 설정
-      const firebaseConfig = {
-        apiKey: "AIzaSyAVPD6hJVl4vqJac24cLzI-B3ToGLKinfI",
-        authDomain: "waterdragon-499c9.firebaseapp.com",
-        databaseURL: "https://waterdragon-499c9-default-rtdb.firebaseio.com",
-        projectId: "waterdragon-499c9",
-        storageBucket: "waterdragon-499c9.firebasestorage.app",
-        messagingSenderId: "756466741361",
-        appId: "1:756466741361:web:818dc87ef66c27ee3eebd0",
-        measurementId: "G-EYNMTZ36HN"
-      };
-
-      // Firebase 초기화
-      firebase.initializeApp(firebaseConfig);
-      const database = firebase.database();
-      const totalCountRef = database.ref('totalCount');
-
-      // 초기 값 설정: totalCount가 없으면 0으로 설정
-      totalCountRef.once('value').then(snapshot => {
-        if (snapshot.val() === null) {
-          totalCountRef.set(0);
-        }
-      });
-
-      // 개인 카운트 (새로고침 시 0)
-      let personalCount = 0;
-      document.getElementById('personalCount').innerText = "내 카운트: " + personalCount;
-
-        // 이미지 변경 효과
-        const img = document.getElementById("clickButton");
-        img.src = "button-active.png";  // 클릭 시 이미지 변경
-        setTimeout(() => { img.src = "button.png"; }, 150);
-
-        // 총 카운트 증가 (Firebase)
-        totalCountRef.transaction(currentCount => {
-          return (currentCount || 0) + 1;
-        });
-
-        // 개인 카운트 증가
-        personalCount++;
-        document.getElementById('personalCount').innerText = "내 카운트: " + personalCount;
-      };
-
-      // 총 카운트 실시간 반영 + 10,000개 달성 이벤트
-      totalCountRef.on("value", (snapshot) => {
-        const totalCount = snapshot.val() || 0;
-        document.getElementById('totalCount').innerText = "총 카운트: " + totalCount;
-
-        // 🎉 10,000번 달성 시 이벤트 발생
-        if (totalCount % 10000 === 0 && totalCount !== 0) {
-          alert(`축하합니다! ${totalCount}번 클릭 달성! 🎉`);
-        }
-      });
-    });
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Popcat처럼 클릭 카운트</title>
+    
+    <!-- Firebase SDK 추가 (Firebase 제공 코드) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
 </head>
 <body>
-  <h1>용수를 누르세요!</h1>
-  
-  <!-- 버튼 (이미지) -->
-  <img id="clickButton" src="button.png" alt="클릭 버튼" onclick="incrementCount()">
-  
-  <!-- 카운트 표시 -->
-  <div class="count-container">
-    <div id="totalCount">총 카운트: 0</div>
-    <div id="personalCount">내 카운트: 0</div>
-  </div>
-
-  <!-- 제작자 정보 -->
-  <footer>
-    <p>제작: <strong>Garden.two</strong></p>
-  </footer>
-</body>
-</html>
+    <h1>Popcat처럼 클릭 카운트!</h1>
+    <button onclick="incrementCount()">클릭하세요!</button>
+    <p
