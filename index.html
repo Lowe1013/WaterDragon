@@ -16,7 +16,7 @@
       align-items: center;
       height: 100vh;
       margin: 0;
-      background: #f0f0f0; /* 배경색 통일 */
+      background: #f0f0f0;
       font-family: sans-serif;
       position: relative;
     }
@@ -55,7 +55,7 @@
       width: 100%;
       padding: 40px 0;
       text-align: center;
-      background: #f0f0f0; /* 버튼 배경과 동일하게 설정 */
+      background: #f0f0f0;
       margin-top: 50px;
     }
     #commentTitle {
@@ -93,7 +93,7 @@
       margin-left: 10px;
     }
     #commentButton::after {
-      content: "↑"; /* 화살표 버튼 변경 */
+      content: "↑";
       font-size: 18px;
       font-weight: bold;
     }
@@ -111,6 +111,8 @@
       font-size: 14px;
       text-align: center;
       border: 1px solid #ddd;
+      cursor: pointer; /* 클릭 가능하도록 변경 */
+      user-select: none;
     }
     footer {
       position: fixed;
@@ -186,7 +188,8 @@
         const commentText = input.value.trim();
 
         if (commentText !== "") {
-          commentsRef.push({
+          const newCommentRef = commentsRef.push();
+          newCommentRef.set({
             text: commentText,
             timestamp: Date.now()
           });
@@ -203,16 +206,44 @@
 
       commentsRef.on("child_added", (snapshot) => {
         const commentData = snapshot.val();
+        const commentKey = snapshot.key; // 댓글의 고유 키
+
         const commentGrid = document.getElementById("commentGrid");
         const commentBox = document.createElement("div");
         commentBox.classList.add("commentBox");
         commentBox.textContent = commentData.text;
+        
+        // 꾹 누르면 삭제
+        let holdTimer;
+        commentBox.addEventListener("mousedown", function () {
+          holdTimer = setTimeout(() => {
+            if (confirm("이 댓글을 삭제하시겠습니까?")) {
+              commentsRef.child(commentKey).remove();
+            }
+          }, 800); // 0.8초 꾹 누르면 삭제
+        });
+
+        commentBox.addEventListener("mouseup", function () {
+          clearTimeout(holdTimer);
+        });
+
         commentGrid.prepend(commentBox);
 
         while (commentGrid.children.length > 24) {
           commentGrid.removeChild(commentGrid.lastChild);
         }
       });
+
+      commentsRef.on("child_removed", (snapshot) => {
+        const commentBoxes = document.getElementsByClassName("commentBox");
+        for (let box of commentBoxes) {
+          if (box.textContent === snapshot.val().text) {
+            box.remove();
+            break;
+          }
+        }
+      });
+
     });
   </script>
 </head>
