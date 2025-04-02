@@ -111,7 +111,7 @@
       font-size: 14px;
       text-align: center;
       border: 1px solid #ddd;
-      cursor: pointer; /* 클릭 가능하도록 변경 */
+      cursor: pointer;
       user-select: none;
     }
     footer {
@@ -152,7 +152,7 @@
       const img = document.getElementById("clickButton");
 
       function pressButton(event) {
-        event.preventDefault(); // 터치 시 중복 클릭 방지
+        event.preventDefault();
         img.src = "button-active.png";
         img.style.transform = "scale(0.95)";
         personalCount++;
@@ -166,10 +166,12 @@
       }
 
       img.addEventListener("mousedown", pressButton);
-      img.addEventListener("touchstart", pressButton, { passive: false }); // 터치 중복 실행 방지
       img.addEventListener("mouseup", releaseButton);
       img.addEventListener("mouseleave", releaseButton);
+
+      img.addEventListener("touchstart", pressButton, { passive: false });
       img.addEventListener("touchend", releaseButton);
+      img.addEventListener("touchcancel", releaseButton);
 
       totalCountRef.on("value", (snapshot) => {
         const totalCount = snapshot.val() || 0;
@@ -213,6 +215,19 @@
         const commentBox = document.createElement("div");
         commentBox.classList.add("commentBox");
         commentBox.textContent = commentData.text;
+        
+        let holdTimer;
+        commentBox.addEventListener("mousedown", function () {
+          holdTimer = setTimeout(() => {
+            if (confirm("이 댓글을 삭제하시겠습니까?")) {
+              commentsRef.child(commentKey).remove();
+            }
+          }, 800);
+        });
+
+        commentBox.addEventListener("mouseup", function () {
+          clearTimeout(holdTimer);
+        });
 
         commentGrid.prepend(commentBox);
 
@@ -221,16 +236,43 @@
         }
       });
 
+      commentsRef.on("child_removed", (snapshot) => {
+        const commentBoxes = document.getElementsByClassName("commentBox");
+        for (let box of commentBoxes) {
+          if (box.textContent === snapshot.val().text) {
+            box.remove();
+            break;
+          }
+        }
+      });
+
     });
   </script>
 </head>
 <body>
   <h1>용수를 누르세요!</h1>
+  
   <div id="personalCount">0</div>
+
   <img id="clickButton" src="button.png" alt="클릭 버튼">
+  
   <div class="count-container">
     <div id="totalCount">총 카운트: 0</div>
   </div>
+
   <div id="specialEvent">🎥 100,000 클릭 달성! 특별 영상이 공개됩니다!</div>
+
+  <div id="commentSection">
+    <div id="commentTitle">용수 칭찬 공간</div>
+    <div id="commentInputContainer">
+      <input id="commentInput" type="text" placeholder="용수를 칭찬해주세요!">
+      <button id="commentButton"></button>
+    </div>
+    <div id="commentGrid"></div>
+  </div>
+
+  <footer>
+    <p>제작: <strong>Garden.two</strong></p>
+  </footer>
 </body>
 </html>
