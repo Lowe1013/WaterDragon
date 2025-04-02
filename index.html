@@ -8,7 +8,7 @@
   <!-- Firebase compat SDK -->
   <script defer src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database-compat.js"></script>
-
+  
   <style>
     body {
       display: flex;
@@ -26,15 +26,21 @@
       transition: transform 0.1s;
     }
     #clickButton:active {
-      transform: scale(0.95);
+      transform: scale(1.1);
     }
-    h1 {
-      margin-bottom: 20px;
-    }
-    .count-container {
-      margin-top: 20px;
-      font-size: 24px;
+    .counter {
+      position: absolute;
+      top: 40%;
+      font-size: 48px;
       font-weight: bold;
+      color: white;
+      text-shadow: 2px 2px 5px black;
+    }
+    #specialNotice {
+      margin-top: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      color: red;
     }
     footer {
       position: fixed;
@@ -43,63 +49,56 @@
       color: gray;
     }
   </style>
-
+  
   <script defer>
     document.addEventListener("DOMContentLoaded", function () {
       // Firebase 설정
       const firebaseConfig = {
-        apiKey: "AIzaSyAVPD6hJVl4vqJac24cLzI-B3ToGLKinfI",
+        apiKey: "AIzaSy...", // (생략)
         authDomain: "waterdragon-499c9.firebaseapp.com",
         databaseURL: "https://waterdragon-499c9-default-rtdb.firebaseio.com",
         projectId: "waterdragon-499c9",
         storageBucket: "waterdragon-499c9.firebasestorage.app",
         messagingSenderId: "756466741361",
-        appId: "1:756466741361:web:818dc87ef66c27ee3eebd0",
-        measurementId: "G-EYNMTZ36HN"
+        appId: "1:756466741361:web:818dc87ef66c27ee3eebd0"
       };
 
-      // Firebase 초기화
       firebase.initializeApp(firebaseConfig);
       const database = firebase.database();
       const totalCountRef = database.ref('totalCount');
 
-      // 초기 값 설정: totalCount가 없으면 0으로 설정
-      totalCountRef.once('value').then(snapshot => {
-        if (snapshot.val() === null) {
-          totalCountRef.set(0);
-        }
+      // 초기 설정
+      let personalCount = 0;
+      document.getElementById('personalCount').innerText = personalCount;
+      
+      // 클릭 이벤트
+      const button = document.getElementById("clickButton");
+      button.addEventListener("mousedown", function () {
+        button.src = "button-active.png";
+        button.style.transform = "scale(1.1)";
+      });
+      
+      button.addEventListener("mouseup", function () {
+        button.src = "button.png";
+        button.style.transform = "scale(1)";
       });
 
-      // 개인 카운트 (새로고침 시 0)
-      let personalCount = 0;
-      document.getElementById('personalCount').innerText = "내 카운트: " + personalCount;
-
-      // 버튼 클릭 시 카운트를 증가시키는 함수
-      window.incrementCount = function () {
+      button.addEventListener("click", function () {
+        personalCount++;
+        document.getElementById('personalCount').innerText = personalCount;
         
-        // 이미지 변경 효과
-        const img = document.getElementById("clickButton");
-        img.src = "button-active.png";  // 클릭 시 이미지 변경
-        setTimeout(() => { img.src = "button.png"; }, 150);
-
-        // 총 카운트 증가 (Firebase)
         totalCountRef.transaction(currentCount => {
           return (currentCount || 0) + 1;
         });
-
-        // 개인 카운트 증가
-        personalCount++;
-        document.getElementById('personalCount').innerText = "내 카운트: " + personalCount;
-      };
-
-      // 총 카운트 실시간 반영 + 10,000개 달성 이벤트
+      });
+      
+      // 총 카운트 실시간 반영
       totalCountRef.on("value", (snapshot) => {
         const totalCount = snapshot.val() || 0;
-        document.getElementById('totalCount').innerText = "총 카운트: " + totalCount;
-
-        // 🎉 10,000번 달성 시 이벤트 발생
-        if (totalCount % 10000 === 0 && totalCount !== 0) {
-          alert(`축하합니다! ${totalCount}번 클릭 달성! 🎉`);
+        document.getElementById('totalCount').innerText = totalCount;
+        
+        if (totalCount >= 100000) {
+          document.getElementById('specialNotice').innerText = "🎉 10만 카운트 달성! 특별 영상 공개 예정!";
         }
       });
     });
@@ -107,17 +106,10 @@
 </head>
 <body>
   <h1>용수를 누르세요!</h1>
-  
-  <!-- 버튼 (이미지) -->
-  <img id="clickButton" src="button.png" alt="클릭 버튼" onclick="incrementCount()">
-  
-  <!-- 카운트 표시 -->
-  <div class="count-container">
-    <div id="totalCount">총 카운트: 0</div>
-    <div id="personalCount">내 카운트: 0</div>
-  </div>
-
-  <!-- 제작자 정보 -->
+  <div class="counter" id="personalCount">0</div>
+  <img id="clickButton" src="button.png" alt="클릭 버튼">
+  <div id="totalCount">총 카운트: 0</div>
+  <div id="specialNotice"></div>
   <footer>
     <p>제작: <strong>Garden.two</strong></p>
   </footer>
