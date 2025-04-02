@@ -13,11 +13,10 @@
     body {
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
-      background: #f0f0f0;
+      background: #f0f0f0; /* 배경색 통일 */
       font-family: sans-serif;
       position: relative;
     }
@@ -25,41 +24,94 @@
       width: 300px;
       cursor: pointer;
       transition: transform 0.1s ease-in-out;
-      margin-top: 30px; /* 버튼 살짝 아래로 이동 */
+      margin-top: 30px;
     }
     h1 {
-      margin-bottom: 30px; /* 제목과 버튼 사이 간격 추가 */
+      margin-bottom: 30px;
     }
     .count-container {
-      margin-top: 30px; /* 총 카운트도 살짝 아래로 */
+      margin-top: 30px;
       font-size: 24px;
       font-weight: bold;
     }
-
-    /* 내 카운트 스타일 */
     #personalCount {
       position: absolute;
-      top: 25%; /* 버튼 상단 살짝 위 */
+      top: 25%;
       font-size: 48px;
       font-weight: bold;
       color: white;
       text-shadow: 4px 4px 6px black;
-      background: none;
-      z-index: 10; /* 버튼보다 위로 배치 */
+      z-index: 10;
     }
-
-    /* 100000 달성 이벤트 메시지 (중앙 하단으로 이동) */
     #specialEvent {
       position: fixed;
-      bottom: 30px;  /* 하단에 배치 */
-      left: 50%;      /* 가운데 정렬 */
-      transform: translateX(-50%);  /* 정확한 중앙 정렬 */
+      bottom: 20px;
       font-size: 18px;
       font-weight: bold;
       color: red;
-      display: none; /* 기본적으로 숨김 */
+      display: none;
     }
-
+    #commentSection {
+      width: 100%;
+      padding: 40px 0;
+      text-align: center;
+      background: #f0f0f0; /* 버튼 배경과 동일하게 설정 */
+      margin-top: 50px;
+    }
+    #commentTitle {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    #commentInputContainer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    #commentInput {
+      width: 60%;
+      padding: 10px 15px;
+      font-size: 16px;
+      border-radius: 25px;
+      border: 1px solid #ccc;
+      outline: none;
+      transition: 0.2s;
+    }
+    #commentInput:focus {
+      border-color: #007aff;
+    }
+    #commentButton {
+      background: #007aff;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      font-size: 16px;
+      border-radius: 50%;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    #commentButton::after {
+      content: "↑"; /* 화살표 버튼 변경 */
+      font-size: 18px;
+      font-weight: bold;
+    }
+    #commentGrid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      width: 80%;
+      margin: auto;
+    }
+    .commentBox {
+      padding: 10px;
+      background: #f9f9f9;
+      border-radius: 10px;
+      font-size: 14px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
     footer {
       position: fixed;
       bottom: 10px;
@@ -70,7 +122,6 @@
 
   <script defer>
     document.addEventListener("DOMContentLoaded", function () {
-      // Firebase 설정
       const firebaseConfig = {
         apiKey: "AIzaSyAVPD6hJVl4vqJac24cLzI-B3ToGLKinfI",
         authDomain: "waterdragon-499c9.firebaseapp.com",
@@ -82,12 +133,11 @@
         measurementId: "G-EYNMTZ36HN"
       };
 
-      // Firebase 초기화
       firebase.initializeApp(firebaseConfig);
       const database = firebase.database();
       const totalCountRef = database.ref('totalCount');
+      const commentsRef = database.ref('comments');
 
-      // 초기 값 설정
       totalCountRef.once('value').then(snapshot => {
         if (snapshot.val() === null) {
           totalCountRef.set(0);
@@ -101,16 +151,15 @@
 
       function pressButton() {
         img.src = "button-active.png";
-        img.style.transform = "scale(0.95)"; // 살짝 눌리는 효과
+        img.style.transform = "scale(0.95)";
         personalCount++;
         document.getElementById('personalCount').innerText = personalCount;
-        
         totalCountRef.transaction(currentCount => (currentCount || 0) + 1);
       }
 
       function releaseButton() {
         img.src = "button.png";
-        img.style.transform = "scale(1)"; // 원래 크기로 복귀
+        img.style.transform = "scale(1)";
       }
 
       img.addEventListener("mousedown", pressButton);
@@ -119,19 +168,49 @@
       img.addEventListener("mouseleave", releaseButton);
       img.addEventListener("touchend", releaseButton);
 
-      // 총 카운트 실시간 반영
       totalCountRef.on("value", (snapshot) => {
         const totalCount = snapshot.val() || 0;
         document.getElementById('totalCount').innerText = "총 카운트: " + totalCount;
 
-        // 🎉 10,000번 달성 시 알람
         if (totalCount % 10000 === 0 && totalCount !== 0) {
           alert(`축하합니다! ${totalCount}번 클릭 달성! 🎉`);
         }
 
-        // ⭐ 100,000번 달성 시 특별 영상 메시지 표시
         if (totalCount >= 100000) {
           document.getElementById('specialEvent').style.display = "block";
+        }
+      });
+
+      function postComment() {
+        const input = document.getElementById("commentInput");
+        const commentText = input.value.trim();
+
+        if (commentText !== "") {
+          commentsRef.push({
+            text: commentText,
+            timestamp: Date.now()
+          });
+          input.value = "";
+        }
+      }
+
+      document.getElementById("commentButton").addEventListener("click", postComment);
+      document.getElementById("commentInput").addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+          postComment();
+        }
+      });
+
+      commentsRef.on("child_added", (snapshot) => {
+        const commentData = snapshot.val();
+        const commentGrid = document.getElementById("commentGrid");
+        const commentBox = document.createElement("div");
+        commentBox.classList.add("commentBox");
+        commentBox.textContent = commentData.text;
+        commentGrid.prepend(commentBox);
+
+        while (commentGrid.children.length > 24) {
+          commentGrid.removeChild(commentGrid.lastChild);
         }
       });
     });
@@ -140,21 +219,25 @@
 <body>
   <h1>용수를 누르세요!</h1>
   
-  <!-- 내 카운트 (버튼 위에 표시) -->
   <div id="personalCount">0</div>
 
-  <!-- 버튼 (이미지) -->
   <img id="clickButton" src="button.png" alt="클릭 버튼">
   
-  <!-- 총 카운트 (아래 유지) -->
   <div class="count-container">
     <div id="totalCount">총 카운트: 0</div>
   </div>
 
-  <!-- 100,000번 달성 시 특별 영상 메시지 (하단 중앙으로 이동) -->
   <div id="specialEvent">🎥 100,000 클릭 달성! 특별 영상이 공개됩니다!</div>
 
-  <!-- 제작자 정보 -->
+  <div id="commentSection">
+    <div id="commentTitle">용수 칭찬 공간</div>
+    <div id="commentInputContainer">
+      <input id="commentInput" type="text" placeholder="용수를 칭찬해주세요!">
+      <button id="commentButton"></button>
+    </div>
+    <div id="commentGrid"></div>
+  </div>
+
   <footer>
     <p>제작: <strong>Garden.two</strong></p>
   </footer>
