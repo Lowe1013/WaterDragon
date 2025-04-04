@@ -120,6 +120,63 @@
       font-size: 14px;
       color: gray;
     }
+    /* 아래 3개 코드 삽입 시작 */
+    /* 웹페이지 전체 흔들림 효과 */
+    @keyframes shake {
+      0%, 100% { transform: translate(0, 0); }
+      10% { transform: translate(-5px, 5px); }
+      20% { transform: translate(5px, -5px); }
+      30% { transform: translate(-5px, 5px); }
+      40% { transform: translate(5px, -5px); }
+      50% { transform: translate(-5px, 5px); }
+      60% { transform: translate(5px, -5px); }
+      70% { transform: translate(-5px, 5px); }
+      80% { transform: translate(5px, -5px); }
+      90% { transform: translate(-5px, 5px); }
+    }
+    /* 불꽃 효과: 고정된 파란/하늘색 불꽃, 움직이지 않음 */
+    #flashEffect {
+      position: fixed;
+      top: 40%; 
+      left: calc(320px); /* 기본 중앙 위치 대신, JS로 재설정 예정 */
+      width: 0;
+      height: 0;
+      background: radial-gradient(circle, rgba(135,206,250,1) 0%, rgba(135,206,250,0) 70%);
+      opacity: 0;
+      pointer-events: none;
+      border-radius: 200%;
+    }
+    /* 용달버(새 게임 버튼) 스타일: 파란 하늘색 계열 */
+    #startNewGame {
+      position: absolute;
+      top: 40%; /* 페이지의 4분의 1 지점 */
+      left: calc(320px); /* button.png 오른쪽에서 30px 왼쪽 이동: 원래 70px -> 40px */
+      padding: 10px 20px;
+      font-size: 18px;
+      font-weight: bold;
+      background-color: #007bff;
+      color: white;
+      border: 2px solid white;
+      border-radius: 10px;
+      cursor: pointer;
+      display: none;
+      opacity: 0;
+      transition: opacity 1s ease-in-out, transform 1s ease-out;
+    }
+    /* 용달버 등장 효과: fadeIn + 불꽃 효과 한 번만 적용 */
+    .show-button {
+      display: block !important;
+      animation: fadeIn 1.5s forwards, flameEffect 1.5s forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateX(50px) scale(0.8); }
+      to { opacity: 1; transform: translateX(0) scale(1); }
+    }
+    @keyframes flameEffect {
+      0% { filter: brightness(3) drop-shadow(0 0 20px deepskyblue); }
+      100% { filter: brightness(1) drop-shadow(0 0 0px deepskyblue); }
+    }
+    /* 아래 3개 코드 삽입 끝 */
   </style>
 
   <script defer>
@@ -150,14 +207,51 @@
       document.getElementById('personalCount').innerText = personalCount;
 
       const img = document.getElementById("clickButton");
+      const startNewGameButton = document.getElementById("startNewGame");
+      const flashEffect = document.getElementById("flashEffect");
+
+      let clickDisabled = false;
+      let levelUpTriggered = false;
 
       function pressButton(event) {
+        if (clickDisabled) return;
         event.preventDefault();
         img.src = "button-active.png";
         img.style.transform = "scale(0.95)";
         personalCount++;
         document.getElementById('personalCount').innerText = personalCount;
         totalCountRef.transaction(currentCount => (currentCount || 0) + 1);
+
+        if (!levelUpTriggered && personalCount === 100) {  // 테스트용: 100회 클릭 시 (나중에 1000으로 변경)
+          levelUpTriggered = true;
+          clickDisabled = true; // 애니메이션 동안 클릭 정지
+
+          // 1. 웹페이지 전체 흔들림 효과
+          document.body.style.animation = "shake 0.5s ease-in-out";
+          setTimeout(() => { document.body.style.animation = ""; }, 500);
+
+          // 2. 불꽃 효과 실행: flashEffect 활성화
+          // flashEffect를 button.png 위에 나타나도록, JS로 위치 재설정
+          flashEffect.style.left = img.offsetLeft + "px";
+          flashEffect.style.top = img.offsetTop + "px";
+          flashEffect.style.opacity = "1";
+          flashEffect.style.width = "300px";
+          flashEffect.style.height = "300px";
+          setTimeout(() => {
+            flashEffect.style.background = "radial-gradient(circle, rgba(173,216,230,1) 0%, rgba(173,216,230,0) 70%)";
+            flashEffect.style.width = "300px";
+            flashEffect.style.height = "300px";
+          }, 800);
+
+          // 3. 1.5초 후 불꽃 효과 사라짐과 동시에 용달버 등장
+          setTimeout(() => {
+            flashEffect.style.opacity = "0";
+            flashEffect.style.width = "0";
+            flashEffect.style.height = "0";
+            startNewGameButton.classList.add("show-button");
+            clickDisabled = false;
+          }, 1500);
+        }
       }
 
       function releaseButton() {
@@ -168,7 +262,6 @@
       img.addEventListener("mousedown", pressButton);
       img.addEventListener("mouseup", releaseButton);
       img.addEventListener("mouseleave", releaseButton);
-
       img.addEventListener("touchstart", pressButton, { passive: false });
       img.addEventListener("touchend", releaseButton);
       img.addEventListener("touchcancel", releaseButton);
@@ -176,11 +269,9 @@
       totalCountRef.on("value", (snapshot) => {
         const totalCount = snapshot.val() || 0;
         document.getElementById('totalCount').innerText = "총 카운트: " + totalCount;
-
         if (totalCount % 10000 === 0 && totalCount !== 0) {
           alert(`축하합니다! ${totalCount}번 클릭 달성! 🎉`);
         }
-
         if (totalCount >= 100000) {
           document.getElementById('specialEvent').style.display = "block";
         }
@@ -189,7 +280,6 @@
       function postComment() {
         const input = document.getElementById("commentInput");
         const commentText = input.value.trim();
-
         if (commentText !== "") {
           const newCommentRef = commentsRef.push();
           newCommentRef.set({
@@ -210,12 +300,10 @@
       commentsRef.on("child_added", (snapshot) => {
         const commentData = snapshot.val();
         const commentKey = snapshot.key;
-
         const commentGrid = document.getElementById("commentGrid");
         const commentBox = document.createElement("div");
         commentBox.classList.add("commentBox");
         commentBox.textContent = commentData.text;
-        
         let holdTimer;
         commentBox.addEventListener("mousedown", function () {
           holdTimer = setTimeout(() => {
@@ -224,13 +312,10 @@
             }
           }, 800);
         });
-
         commentBox.addEventListener("mouseup", function () {
           clearTimeout(holdTimer);
         });
-
         commentGrid.prepend(commentBox);
-
         while (commentGrid.children.length > 24) {
           commentGrid.removeChild(commentGrid.lastChild);
         }
@@ -246,6 +331,12 @@
         }
       });
 
+      // 용달버(새 게임 버튼) 효과 삽입 시작
+      startNewGameButton.addEventListener("click", function () {
+        window.location.href = "https://lowe1013.github.io/runWaterDragon/";
+      });
+      // 용달버 효과 삽입 끝
+      
     });
   </script>
 </head>
@@ -253,15 +344,14 @@
   <h1>용수를 누르세요!</h1>
   
   <div id="personalCount">0</div>
-
   <img id="clickButton" src="button.png" alt="클릭 버튼">
   
   <div class="count-container">
     <div id="totalCount">총 카운트: 0</div>
   </div>
-
+  
   <div id="specialEvent">🎥 100,000 클릭 달성! 특별 영상이 공개됩니다!</div>
-
+  
   <div id="commentSection">
     <div id="commentTitle">용수 칭찬 공간</div>
     <div id="commentInputContainer">
@@ -270,7 +360,12 @@
     </div>
     <div id="commentGrid"></div>
   </div>
-
+  
+  <!-- 아래 3개 HTML 코드 삽입 시작 -->
+  <div id="flashEffect"></div>
+  <button id="startNewGame" style="display: none;">용수 달리기 START</button>
+  <!-- 아래 3개 HTML 코드 삽입 끝 -->
+  
   <footer>
     <p>제작: <strong>Garden.two</strong></p>
   </footer>
